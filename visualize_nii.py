@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from diffdrr.drr import DRR
-from diffdrr.data import load_example_ct, read
+from diffdrr.data import read
 from diffdrr.visualization import plot_drr
 
 # Read in the volume and get its origin and spacing in world coordinates
