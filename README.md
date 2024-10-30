@@ -7,3 +7,5 @@ python 3.8 can't install diffdrr. I'm using python 3.10
 ```shell
 pip install diffdrr
 ```
+* `.stl`: triangular mesh. We're using `mm` unit.
+* `.nii`: voxel.
