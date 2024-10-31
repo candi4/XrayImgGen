@@ -9,4 +9,6 @@ pip install diffdrr
 ```
 * `.stl`: triangular mesh. We're using `mm` unit.
 * `.nii`: voxel. One side of one voxel is `1mm * voxel_size`.
-* 
+
+### Axes conventions
+* In the camera coordinate system, the x-axis points downward in the image, the y-axis points leftward, and the z-axis is perpendicular to the image plane, extending outward.
