@@ -1,3 +1,4 @@
+# %%
 import time
 start_time = time.time()
 
@@ -6,6 +7,7 @@ import torchio
 import matplotlib.pyplot as plt
 import torch
 import cv2
+import numpy as np
 
 from diffdrr.drr import DRR
 from diffdrr.data import read, RigidTransform
@@ -37,7 +39,7 @@ drr = DRR(
     subject,     # An object storing the CT volume, origin, and voxel spacing
     sdd=1020.0,  # Source-to-detector distance (i.e., focal length)
     height=200,  # Image height (if width is not provided, the generated DRR is square)
-    delx=2.0,    # Pixel spacing (in mm)
+    delx=0.1,    # Pixel spacing (in mm)
 ).to(device)
 
 # Set the camera pose with rotations (yaw, pitch, roll) and translations (x, y, z)
@@ -46,8 +48,13 @@ translations = torch.tensor([[0.0, 0, 0.0]], device=device)
 
 # 📸 Also note that DiffDRR can take many representations of SO(3) 📸
 # For example, quaternions, rotation matrix, axis-angle, etc...
-img = drr(rotations, translations, parameterization="euler_angles", convention="ZXY")
-print(img.shape)
+img = drr(rotations, translations, parameterization="euler_angles", convention="ZXY") # shape (1,1,200,200)
+
+# %%
+image_np = img.squeeze().cpu().detach().numpy() / img.max().item()
+image_np = (image_np*255).astype(np.uint8)
+cv2.imwrite('output_image.png', image_np)
+cv2.imshow('output_image.png', image_np); cv2.waitKey(1)
+
 print("Consumed time:", time.time() - start_time)
-plot_drr(img, ticks=False)
-plt.show()
+# %%

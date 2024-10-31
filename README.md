@@ -8,4 +8,5 @@ python 3.8 can't install diffdrr. I'm using python 3.10
 pip install diffdrr
 ```
 * `.stl`: triangular mesh. We're using `mm` unit.
-* `.nii`: voxel.
+* `.nii`: voxel. One side of one voxel is `1mm * voxel_size`.
+* 
