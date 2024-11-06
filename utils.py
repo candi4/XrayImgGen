@@ -38,7 +38,7 @@ def convert_stl2nii(stl_filename:str, nii_filename:str, voxel_size:float):
     nib.save(nii_img, nii_filename)
 
 
-def object_xray(transform_matrix:torch.Tensor, voxel_size:float,
+def object_xray(transform_matrix:torch.Tensor, voxel_size:float, nii_filename:str,
                 sdd=1020.0,
                 height=100,
                 width=100, 
@@ -57,7 +57,7 @@ def object_xray(transform_matrix:torch.Tensor, voxel_size:float,
     transform = RigidTransform(transform_matrix)
 
     # Read in the volume and get its origin and spacing in world coordinates
-    subject = read(torchio.ScalarImage('output.nii'),
+    subject = read(torchio.ScalarImage(nii_filename),
                 center_volume=False,
                 orientation=None,
                 transform=transform,
@@ -84,7 +84,8 @@ def object_xray(transform_matrix:torch.Tensor, voxel_size:float,
     return image_np
 
 def save_image(image_np:np.ndarray, image_filename:str, pixel_max:float):
-    image_np /= pixel_max
+    if pixel_max != 0:
+        image_np /= pixel_max
     image_np = (image_np*255).astype(np.uint8)
     
     cv2.imwrite(image_filename, image_np)
@@ -95,24 +96,56 @@ if __name__ == "__main__":
     start_time = time.time()
     print("Start main code")
 
-    stl_filename='파트11.stl'
-    nii_filename='output.nii'
     voxel_size=0.05
-    convert_stl2nii(stl_filename=stl_filename, nii_filename=nii_filename, voxel_size=voxel_size)
+    object_filenames = ['part11','part13','part23'][::-1]
 
-
+    make_nii = False
+    if make_nii:
+        for object_filename in object_filenames:
+            stl_filename = object_filename + '.stl'
+            nii_filename = object_filename + '.nii'
+            convert_stl2nii(stl_filename=stl_filename, nii_filename=nii_filename, voxel_size=voxel_size)
+    
+    # The center of the larger circle of part11 is the origin of the assembly.
+    assembly_calibrations = dict()
+    assembly_calibrations['part11'] = torch.tensor([[1,0,0,-4],
+                                                      [0,1,0,0],
+                                                      [0,0,1,-4],
+                                                      [0,0,0,1]], dtype=float)
+    assembly_calibrations['part13'] = torch.tensor([[1,0,0,-3],
+                                                      [0,1,0,32],
+                                                      [0,0,1,-3],
+                                                      [0,0,0,1]], dtype=float)
+    assembly_calibrations['part23'] = torch.tensor([[0,1,0,0],
+                                                    [1,0,0,0],
+                                                    [0,0,1,0],
+                                                    [0,0,0,1]], dtype=float) \
+                                    @ torch.tensor([[1,0,0,1.683],
+                                                    [0,1,0,-3.37],
+                                                    [0,0,1,-3.37],
+                                                    [0,0,0,1]], dtype=float)
+    
+    # Transform the assembly based on the world frame
     transform_matrix = torch.tensor([[1,0,0,0],
-                                     [0,1,0,0],
-                                     [0,0,1,300], # z < sdd
-                                     [0,0,0,1]], dtype=float) # in mm
-    image_np = object_xray(transform_matrix=transform_matrix, voxel_size=voxel_size,
-                            sdd=1020.0,
-                            height=100, 
-                            width=100, 
-                            delx=0.5,)
+                                    [0,1,0,-45/2],
+                                    [0,0,1,950], # z < sdd
+                                    [0,0,0,1]], dtype=float) # in mm
+    image_nps = dict()
+    for object_filename in object_filenames:
+        stl_filename = object_filename + '.stl'
+        nii_filename = object_filename + '.nii'
+        image_np = object_xray(transform_matrix=transform_matrix@assembly_calibrations[object_filename], 
+                            voxel_size=voxel_size, nii_filename=nii_filename,
+                                sdd=1020.0,
+                                height=20, 
+                                width=100, 
+                                delx=0.5,)
+        image_nps[object_filename] = image_np
     
-    image_filename = 'output_image.png'
-    pixel_max = image_np.max()
-    save_image(image_np, image_filename, pixel_max)
-    
+    assembly_image = np.zeros_like(image_np)
+    for object_filename in object_filenames:
+        assembly_image += image_nps[object_filename]
+    save_image(image_np=assembly_image, image_filename=f'images/assembly{""}.png', pixel_max=assembly_image.max())
+
     print("Consumed time:",time.time()-start_time)
+    
