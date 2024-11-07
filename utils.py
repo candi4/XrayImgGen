@@ -6,6 +6,8 @@ import torchio
 import cv2
 import time
 from scipy.spatial.transform import Rotation as R
+import random
+import os
 
 from diffdrr.drr import DRR
 from diffdrr.data import read, RigidTransform
@@ -84,14 +86,30 @@ def object_xray(transform_matrix:torch.Tensor, voxel_size:float, nii_filename:st
     image_np = img.squeeze().cpu().detach().numpy()
     return image_np
 
-def save_image(image_np:np.ndarray, image_filename:str, pixel_max:float):
+def save_image(image_np:np.ndarray, image_filename:str, pixel_max:float, imshow=False, printing=False):
+    if not os.path.exists(os.path.dirname(image_filename)):
+        os.makedirs(os.path.dirname(image_filename), exist_ok=True)
     if pixel_max != 0:
         image_np /= pixel_max
     image_np = (image_np*255).astype(np.uint8)
     
     cv2.imwrite(image_filename, image_np)
-    cv2.imshow(image_filename, image_np); cv2.waitKey(1)
+    if imshow: cv2.imshow(image_filename, image_np); cv2.waitKey(1)
+    if printing: print(f"{image_filename} is saved")
     
+def crop_nonzero(arr):
+    # Find the indices of non-zero values
+    nonzero_indices = np.argwhere(arr != 0)
+    
+    if nonzero_indices.size == 0:
+        return arr  # Return the original array if there are no non-zero values
+    
+    # Calculate the coordinates of the rectangle
+    top_left = nonzero_indices.min(axis=0)
+    bottom_right = nonzero_indices.max(axis=0) + 1  # Add 1 to include the last index
+
+    # Crop the rectangle
+    return arr[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]]
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -102,10 +120,12 @@ if __name__ == "__main__":
 
     make_nii = False
     if make_nii:
+        print("Starting converting")
         for object_filename in object_filenames:
             stl_filename = object_filename + '.stl'
             nii_filename = object_filename + '.nii'
             convert_stl2nii(stl_filename=stl_filename, nii_filename=nii_filename, voxel_size=voxel_size)
+        print("Finished converting")
     
     # The center of the larger circle of part11 is the origin of the assembly.
     # part frame based on assembly frame (a_i)
@@ -127,10 +147,10 @@ if __name__ == "__main__":
                                                     [0,0,1,-3.37],
                                                     [0,0,0,1]], dtype=float)
     
-    for ry in range(0,91,10):
-        for rx in range(0,91,10):
+    for ry in range(-90,91,10):
+        for rx in range(-90,91,10):
             # Transform the assembly based on the world frame
-            # assembly frame based on world frame  (w_a) ##################
+            # assembly frame based on world frame  (w_a)
             H_wc = torch.tensor([[1,0,0,0], # in mm
                                  [0,1,0,0],
                                  [0,0,1,950], # z < sdd
@@ -157,7 +177,8 @@ if __name__ == "__main__":
             assembly_image = np.zeros_like(image_np)
             for object_filename in object_filenames:
                 assembly_image += image_nps[object_filename]
-            save_image(image_np=assembly_image, image_filename=f'images/assembly_{ry}_{rx}.png', pixel_max=assembly_image.max())
+            assembly_image = crop_nonzero(assembly_image)
+            save_image(image_np=assembly_image, image_filename=f'images/module/(ry{ry})(rx{rx})(delx{delx}).png', pixel_max=assembly_image.max(), printing=True)
 
     print("Consumed time:",time.time()-start_time)
     
