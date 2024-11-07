@@ -5,6 +5,7 @@ import nibabel as nib
 import torchio
 import cv2
 import time
+from scipy.spatial.transform import Rotation as R
 
 from diffdrr.drr import DRR
 from diffdrr.data import read, RigidTransform
@@ -107,6 +108,7 @@ if __name__ == "__main__":
             convert_stl2nii(stl_filename=stl_filename, nii_filename=nii_filename, voxel_size=voxel_size)
     
     # The center of the larger circle of part11 is the origin of the assembly.
+    # part frame based on assembly frame (a_i)
     assembly_calibrations = dict()
     assembly_calibrations['part11'] = torch.tensor([[1,0,0,-4],
                                                       [0,1,0,0],
@@ -125,27 +127,37 @@ if __name__ == "__main__":
                                                     [0,0,1,-3.37],
                                                     [0,0,0,1]], dtype=float)
     
-    # Transform the assembly based on the world frame
-    transform_matrix = torch.tensor([[1,0,0,0],
-                                    [0,1,0,-45/2],
-                                    [0,0,1,950], # z < sdd
-                                    [0,0,0,1]], dtype=float) # in mm
-    image_nps = dict()
-    for object_filename in object_filenames:
-        stl_filename = object_filename + '.stl'
-        nii_filename = object_filename + '.nii'
-        image_np = object_xray(transform_matrix=transform_matrix@assembly_calibrations[object_filename], 
-                            voxel_size=voxel_size, nii_filename=nii_filename,
-                                sdd=1020.0,
-                                height=20, 
-                                width=100, 
-                                delx=0.5,)
-        image_nps[object_filename] = image_np
-    
-    assembly_image = np.zeros_like(image_np)
-    for object_filename in object_filenames:
-        assembly_image += image_nps[object_filename]
-    save_image(image_np=assembly_image, image_filename=f'images/assembly{""}.png', pixel_max=assembly_image.max())
+    for ry in range(0,91,10):
+        for rx in range(0,91,10):
+            # Transform the assembly based on the world frame
+            # assembly frame based on world frame  (w_a) ##################
+            H_wc = torch.tensor([[1,0,0,0], # in mm
+                                 [0,1,0,0],
+                                 [0,0,1,950], # z < sdd
+                                 [0,0,0,1]], dtype=float)
+            H_wc[:3,:3] = torch.tensor(R.from_euler('yx',(ry,rx), True).as_matrix())
+            H_ca = torch.tensor([[1,0,0,0],
+                                 [0,1,0,-45/2],
+                                 [0,0,1,0],
+                                 [0,0,0,1]], dtype=float)
+            transform_matrix = H_wc @ H_ca
+            image_nps = dict()
+            for object_filename in object_filenames:
+                nii_filename = object_filename + '.nii'
+                delx = 0.1
+                # part frame based on world frame (w_i = w_a @ a_i)
+                image_np = object_xray(transform_matrix=transform_matrix@assembly_calibrations[object_filename], 
+                                    voxel_size=voxel_size, nii_filename=nii_filename,
+                                        sdd=1020.0,
+                                        height=int(20*0.5/delx),
+                                        width=int(100*0.5/delx),
+                                        delx=delx,)
+                image_nps[object_filename] = image_np
+            
+            assembly_image = np.zeros_like(image_np)
+            for object_filename in object_filenames:
+                assembly_image += image_nps[object_filename]
+            save_image(image_np=assembly_image, image_filename=f'images/assembly_{ry}_{rx}.png', pixel_max=assembly_image.max())
 
     print("Consumed time:",time.time()-start_time)
     
