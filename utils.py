@@ -48,6 +48,7 @@ def object_xray(transform_matrix:torch.Tensor, voxel_size:float, nii_filename:st
                 delx=0.5,  
                 ):
     """
+    @param transform_matrix: part frame based on world frame (w_i)
     @param voxel_size: the value used when making nii file
     @param sdd: Source-to-detector distance (i.e., focal length)
     @param height: Image height (if width is not provided, the generated DRR is square)
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     print("Start main code")
 
     voxel_size=0.05
-    object_filenames = ['part11','part13','part23'][::-1]
+    object_filenames = ['part11','part13','part23']
 
     make_nii = False
     if make_nii:
@@ -164,14 +165,14 @@ if __name__ == "__main__":
             image_nps = dict()
             for object_filename in object_filenames:
                 nii_filename = object_filename + '.nii'
-                delx = 0.1
+                delx = 0.1 # delx mm for one pixel
                 # part frame based on world frame (w_i = w_a @ a_i)
                 image_np = object_xray(transform_matrix=transform_matrix@assembly_calibrations[object_filename], 
                                     voxel_size=voxel_size, nii_filename=nii_filename,
                                         sdd=1020.0,
                                         height=int(20*0.5/delx),
                                         width=int(100*0.5/delx),
-                                        delx=delx,)
+                                        delx=delx,) # 1.06 sec for one image with delx=0.1 using GPU
                 image_nps[object_filename] = image_np
             
             assembly_image = np.zeros_like(image_np)
