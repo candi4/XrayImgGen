@@ -31,6 +31,7 @@ assert set(object_filenames).issubset(set(assembly_calibrations.keys())), f"asse
 
 for ry in range(-90,91,10):
     for rx in range(-90,91,10):
+        delx = 0.1 # delx mm for one pixel
         # Transform the assembly based on the world frame
         # assembly frame based on world frame  (w_a)
         H_wc = torch.tensor([[1,0,0,0], # in mm
@@ -46,7 +47,6 @@ for ry in range(-90,91,10):
         image_nps = dict()
         for object_filename in object_filenames:
             nii_filename = object_filename + '.nii'
-            delx = 0.1 # delx mm for one pixel
             # part frame based on world frame (w_i = w_a @ a_i)
             image_np = object_xray(transform_matrix=transform_matrix@assembly_calibrations[object_filename], 
                                 voxel_size=voxel_size, nii_filename=nii_filename,

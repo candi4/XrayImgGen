@@ -74,7 +74,7 @@ def object_xray(transform_matrix:torch.Tensor, voxel_size:float, nii_filename:st
         sdd=sdd,
         height=height,
         width=width,
-        delx=delx,
+        delx=delx,   # mm for one pixel
     ).to(device)
 
     # Set the camera pose with rotations (yaw, pitch, roll) and translations (x, y, z)
