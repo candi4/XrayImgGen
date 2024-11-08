@@ -3,6 +3,7 @@ object_filenames:
   - part11
   - part13
   - part23
+
 # The center of the larger circle of part11 is the origin of the assembly.
 # part frame based on assembly frame (a_i)
 assembly_calibrations:
@@ -25,3 +26,15 @@ assembly_calibrations:
         [0,1,0,-3.37],
         [0,0,1,-3.37],
         [0,0,0,1]]]
+# part frame based on world frame (w_i = w_a @ a_i)
+transform_matrix:
+  H_wc: # Apply rotation
+    [[1,0,0,0], # in mm
+     [0,1,0,0],
+     [0,0,1,950], # z < sdd
+     [0,0,0,1]]
+  H_ca:
+    [[1,0,0,0],
+     [0,1,0,-22.5],
+     [0,0,1,0],
+     [0,0,0,1]]
