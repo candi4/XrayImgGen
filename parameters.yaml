@@ -1,8 +1,8 @@
 voxel_size: 0.05  # Size of each voxel in the VoxelGrid (in mm)
 object_filenames:
-  - part11
-  - part13
-  - part23
+  - part11 # the shell-shaped part surrounding the module
+  - part13 # the smallest part for connecting with a wire
+  - part23 # the part having hooks
 
 # The center of the larger circle of part11 is the origin of the assembly.
 # part frame based on assembly frame (a_i)
@@ -38,3 +38,9 @@ transform_matrix:
      [0,1,0,-22.5],
      [0,0,1,0],
      [0,0,0,1]]
+
+# 
+weights:
+  part11: 0.5
+  part13: 1
+  part23: 0.5
