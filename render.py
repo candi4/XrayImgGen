@@ -5,39 +5,28 @@ import torch
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 import random
+from tqdm import tqdm
 
-from utils import (object_xray, crop_nonzero, save_image)
+from utils import (object_xray, crop_nonzero, save_image, yaml_preprocessing)
 
 import yaml
 with open("parameters.yaml", "r") as file:
     params = yaml.safe_load(file)
+
+# Prepares YAML parameters.
+params = yaml_preprocessing(yalm_params=params)
+
 voxel_size = params["voxel_size"]
 object_filenames = params['object_filenames']
 assembly_calibrations = params['assembly_calibrations']
 
-# The center of the larger circle of part11 is the origin of the assembly.
-# part frame based on assembly frame (a_i)
-for part, matrix in assembly_calibrations.items():
-    matrix = torch.tensor(matrix, dtype=float)
-    if matrix.shape == (4,4):
-        assembly_calibrations[part] = torch.tensor(matrix, dtype=float)
-    else:
-        assembly_calibrations[part] = torch.eye(4, dtype=float)
-        for x in matrix:
-            x = torch.tensor(x, dtype=float)
-            assembly_calibrations[part] = assembly_calibrations[part] @ x
-assert set(object_filenames).issubset(set(assembly_calibrations.keys())), f"assembly_calibrations={assembly_calibrations}\nobject_filenames={object_filenames}"
-
-
-for i in range(1000):
-    ry = random.uniform(0,90)
-    rx = random.uniform(0,180)
+for i in (pbar := tqdm(range(1000), desc="Rendering")):
+    ry = random.uniform(0,360)
+    rx = random.uniform(-70,70)
     delx = 0.1 # delx mm for one pixel
-    image_filename=f'images/module/(ry{int(ry)})(rx{int(rx)})(delx{delx}).png'
-    # # Let's add code for skipping existing files
-    # #
+    image_filename=f'images/module/ry{int(ry):03}_rx{int(rx):+03}_{random.randint(0,9999):04}.png'
+    pbar.set_postfix(image_filename=image_filename)
 
-    cycle_start = time.time()
     # Transform the assembly based on the world frame
     # assembly frame based on world frame  (w_a)
     H_wc = torch.tensor(params['transform_matrix']['H_wc'], dtype=float)
@@ -61,7 +50,6 @@ for i in range(1000):
     for object_filename in object_filenames:
         assembly_image += image_nps[object_filename] * params['weights'][object_filename]
     assembly_image = crop_nonzero(assembly_image)
-    save_image(image_np=assembly_image, image_filename=image_filename, pixel_max=assembly_image.max(), printing=True)
-    print("    One cycle time:", time.time()-cycle_start)
+    save_image(image_np=assembly_image, image_filename=image_filename, pixel_max=assembly_image.max(), printing=False)
 
 print("Consumed time:",time.time()-start_time)

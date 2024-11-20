@@ -12,6 +12,33 @@ import os
 from diffdrr.drr import DRR
 from diffdrr.data import read, RigidTransform
 
+def yaml_preprocessing(yalm_params:dict):
+    """
+    Prepares YAML parameters. It can be used multiple times.
+
+    The center of the larger circle of part11 is the origin of the assembly.
+    part frame based on assembly frame (a_i)
+    """
+    yalm_params = yalm_params.copy()
+    assembly_calibrations = yalm_params['assembly_calibrations']
+    object_filenames = yalm_params['object_filenames']
+    for part, matrix in assembly_calibrations.items():
+        matrix = torch.tensor(matrix, dtype=float)
+        if matrix.shape == (4,4):
+            assembly_calibrations[part] = torch.tensor(matrix, dtype=float)
+        else:
+            assembly_calibrations[part] = torch.eye(4, dtype=float)
+            for x in matrix:
+                x = torch.tensor(x, dtype=float)
+                assembly_calibrations[part] = assembly_calibrations[part] @ x
+    if not set(object_filenames).issubset(set(assembly_calibrations.keys())):
+        print(f"assembly_calibrations={assembly_calibrations}\nobject_filenames={object_filenames}")
+        raise ValueError("The filename not used in object_filenames has been used in assembly_calibrations.")
+    yalm_params['assembly_calibrations'] = assembly_calibrations
+
+    return yalm_params
+
+
 def convert_stl2nii(stl_filename:str, nii_filename:str, voxel_size:float):
     """convert 3d mesh to 3d voxel
     """
