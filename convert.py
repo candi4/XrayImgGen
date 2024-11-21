@@ -1,5 +1,6 @@
 # %%
 import time
+import os
 start_time = time.time()
 
 from utils import convert_stl2nii
@@ -8,7 +9,9 @@ import yaml
 with open("parameters.yaml", "r") as file:
     params = yaml.safe_load(file)
 voxel_size = params["voxel_size"]
-object_filenames = params['object_filenames']
+
+directory = 'R_assembly'
+object_filenames = list(set([os.path.join(directory,os.path.splitext(filename)[0]) for filename in os.listdir(directory)]))
 
 print("Starting converting")
 for object_filename in object_filenames:
