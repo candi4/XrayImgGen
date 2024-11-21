@@ -44,11 +44,22 @@ for i in (pbar := tqdm(range(1000), desc="Rendering")):
                                width=int(100*0.5/delx),
                                delx=delx,
                                ) # 1.06 sec for one image with delx=0.1 using GPU
+        # >>> For realistic rendering >>>
+        if object_filename == 'part11': # the shell-shaped part surrounding the module
+            image_np /= 2
+            # Add constant to non-zero pixels
+            image_np[image_np != 0] += 1
+        if object_filename == 'part13': # the smallest part for connecting with a wire
+            pass
+        if object_filename == 'part23': # the part having hooks
+            image_np /= 2
+
+        # <<< For realistic rendering <<<
         image_nps[object_filename] = image_np
     
     assembly_image = np.zeros_like(image_np)
     for object_filename in object_filenames:
-        assembly_image += image_nps[object_filename] * params['weights'][object_filename]
+        assembly_image += image_nps[object_filename]
     assembly_image = crop_nonzero(assembly_image)
     save_image(image_np=assembly_image, image_filename=image_filename, pixel_max=assembly_image.max(), printing=False)
 
