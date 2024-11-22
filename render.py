@@ -70,7 +70,7 @@ for i in (pbar := tqdm(range(1000), desc="Render")):
                 # middle area is similar to the background (0.22 in constract)
                 # side area is 0.40 in contract -> 0.22 from background
                 image_np /= image_np.max()
-                image_np *= (0.40 - 0.22)
+                image_np[image_np > 0] = (0.40 - 0.22)*0.4
         elif object_filename in ('R_part32',  # Ring in the middle of R_part23
                                  'R_part33'): # Ring at the end    of R_part23
             if not contrast_medium:
