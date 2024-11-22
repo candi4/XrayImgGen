@@ -26,7 +26,7 @@ directory = params['object_directory']
 for i in (pbar := tqdm(range(1000), desc="Render")):
     if i == 0: rx=ry=0
     else:
-        ry = random.uniform(0,360)
+        ry = 0 #random.uniform(0,360)
         rx = random.uniform(-40,40)
     delx = 0.1 # delx mm for one pixel
     image_filename=f'images/module/ry{int(ry):03}_rx{int(rx):+03}_{random.randint(0,9999):04}.png'
@@ -54,13 +54,13 @@ for i in (pbar := tqdm(range(1000), desc="Render")):
         if object_filename == 'R_part11': # the shell-shaped part surrounding the module
             if not contrast_medium:
                 # 0.22 in contrast -> same as background without contrast-medium
-                image_np *= 0
+                image_np[image_np > 0] *= 0.01
         elif object_filename == 'R_part13': # the smallest part for connecting with a wire
             if not contrast_medium:
                 # Max 0.53 in contrast, Min 0.41 in contrast
                 image_np /= image_np.max()
                 image_np *= (0.53 - 0.41)
-                image_np[image_np != 0] += 0.41
+                image_np[image_np != 0] += 0.2
         elif object_filename == 'R_part23': # the part having hooks
             if not contrast_medium:
                 # 0.4 in contrast -> 0.3 from background
@@ -85,7 +85,7 @@ for i in (pbar := tqdm(range(1000), desc="Render")):
                 image_np[image_np != 0] = 0.75-0.3-0.1
         elif object_filename == 'R_part41': # left  chip inside of R_part23
             if not contrast_medium:
-                image_np[image_np != 0] = 0.125
+                image_np[image_np != 0] = 0.2
         elif object_filename == 'R_part42': # right chip inside of R_part23
             if not contrast_medium:
                 image_np[image_np != 0] = 0.125
