@@ -10,7 +10,7 @@ with open("parameters.yaml", "r") as file:
     params = yaml.safe_load(file)
 voxel_size = params["voxel_size"]
 
-directory = 'R_assembly'
+directory = params['object_directory']
 object_filenames = list(set([os.path.join(directory,os.path.splitext(filename)[0]) for filename in os.listdir(directory)]))
 
 print("Starting converting")

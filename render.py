@@ -6,6 +6,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import random
 from tqdm import tqdm
+import os
 
 from utils import (object_xray, crop_nonzero, save_image, yaml_preprocessing)
 
@@ -19,10 +20,13 @@ params = yaml_preprocessing(yalm_params=params)
 voxel_size = params["voxel_size"]
 object_filenames = params['object_filenames']
 assembly_calibrations = params['assembly_calibrations']
+directory = params['object_directory']
 
 for i in (pbar := tqdm(range(1000), desc="Rendering")):
-    ry = random.uniform(0,360)
-    rx = random.uniform(-70,70)
+    if i == 0: rx=ry=0
+    else:
+        ry = random.uniform(0,360)
+        rx = random.uniform(-70,70)
     delx = 0.1 # delx mm for one pixel
     image_filename=f'images/module/ry{int(ry):03}_rx{int(rx):+03}_{random.randint(0,9999):04}.png'
     pbar.set_postfix(image_filename=image_filename)
@@ -35,7 +39,7 @@ for i in (pbar := tqdm(range(1000), desc="Rendering")):
     transform_matrix = H_wc @ H_ca
     image_nps = dict()
     for object_filename in object_filenames:
-        nii_filename = object_filename + '.nii'
+        nii_filename = os.path.join(directory, object_filename + '.nii')
         # part frame based on world frame (w_i = w_a @ a_i)
         image_np = object_xray(transform_matrix=transform_matrix@assembly_calibrations[object_filename], 
                                voxel_size=voxel_size, nii_filename=nii_filename,
@@ -45,14 +49,31 @@ for i in (pbar := tqdm(range(1000), desc="Rendering")):
                                delx=delx,
                                ) # 1.06 sec for one image with delx=0.1 using GPU
         # >>> For realistic rendering >>>
-        if object_filename == 'part11': # the shell-shaped part surrounding the module
-            image_np /= 2
+        if object_filename == 'R_part11': # the shell-shaped part surrounding the module
+            # image_np /= 2
+            # # Add constant to non-zero pixels
+            # image_np[image_np != 0] += 1
+            pass
+        elif object_filename == 'R_part13': # the smallest part for connecting with a wire
+            pass
+        elif object_filename == 'R_part23': # the part having hooks
+            image_np *= 1
+        elif object_filename == 'R_part31':
+            image_np *= 0.1
             # Add constant to non-zero pixels
             image_np[image_np != 0] += 1
-        if object_filename == 'part13': # the smallest part for connecting with a wire
-            pass
-        if object_filename == 'part23': # the part having hooks
-            image_np /= 2
+        elif object_filename == 'R_part32':
+            image_np *= 0.1
+            # Add constant to non-zero pixels
+            image_np[image_np != 0] += 1
+        elif object_filename == 'R_part33':
+            image_np *= 0.1
+            # Add constant to non-zero pixels
+            image_np[image_np != 0] += 1
+        elif object_filename == 'R_part34':
+            image_np *= 0.1
+            # Add constant to non-zero pixels
+            image_np[image_np != 0] += 1
 
         # <<< For realistic rendering <<<
         image_nps[object_filename] = image_np
