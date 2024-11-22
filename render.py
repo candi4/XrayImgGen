@@ -7,6 +7,7 @@ from scipy.spatial.transform import Rotation as R
 import random
 from tqdm import tqdm
 import os
+import cv2
 
 from utils import (object_xray, crop_nonzero, save_image, yaml_preprocessing)
 
@@ -49,31 +50,39 @@ for i in (pbar := tqdm(range(1000), desc="Render")):
                                delx=delx,
                                ) # 1.06 sec for one image with delx=0.1 using GPU
         # >>> For realistic rendering >>>
+        contrast_medium = False
         if object_filename == 'R_part11': # the shell-shaped part surrounding the module
-            # image_np /= 2
-            # # Add constant to non-zero pixels
-            # image_np[image_np != 0] += 1
-            pass
+            if not contrast_medium:
+                # 0.22 in contrast -> same as background without contrast-medium
+                image_np *= 0
         elif object_filename == 'R_part13': # the smallest part for connecting with a wire
-            pass
+            if not contrast_medium:
+                # Max 0.53 in contrast, Min 0.41 in contrast
+                image_np /= image_np.max()
+                image_np *= (0.53 - 0.41)
+                image_np[image_np != 0] += 0.41
         elif object_filename == 'R_part23': # the part having hooks
-            image_np *= 1
-        elif object_filename == 'R_part31':
-            image_np *= 0.1
-            # Add constant to non-zero pixels
-            image_np[image_np != 0] += 1
-        elif object_filename == 'R_part32':
-            image_np *= 0.1
-            # Add constant to non-zero pixels
-            image_np[image_np != 0] += 1
-        elif object_filename == 'R_part33':
-            image_np *= 0.1
-            # Add constant to non-zero pixels
-            image_np[image_np != 0] += 1
-        elif object_filename == 'R_part34':
-            image_np *= 0.1
-            # Add constant to non-zero pixels
-            image_np[image_np != 0] += 1
+            if not contrast_medium:
+                # 0.4 in contrast -> 0.3 from background
+                image_np[image_np != 0] = 0.4 - 0.3
+        elif object_filename == 'R_part31': # Ring at the end of R_part11
+            if not contrast_medium:
+                # middle area is similar to the background (0.22 in constract)
+                # side area is 0.40 in contract -> 0.22 from background
+                image_np /= image_np.max()
+                image_np *= (0.40 - 0.22)
+        elif object_filename in ('R_part32',  # Ring in the middle of R_part23
+                                 'R_part33'): # Ring at the end    of R_part23
+            if not contrast_medium:
+                # 0.65 for two layers in contrast
+                # 0.3 from background, 0.1 from part23
+                image_np[image_np != 0] = (0.65-0.3-0.1)/2
+        elif object_filename == 'R_part34': # Point at the end of R_part23
+            if not contrast_medium:
+                # 0.25 in paint -> 0.75 in contrast
+                # 0.3 is from background.
+                # 0.1 from part23
+                image_np[image_np != 0] = 0.75-0.3-0.1
 
         # <<< For realistic rendering <<<
         image_nps[object_filename] = image_np
@@ -82,6 +91,7 @@ for i in (pbar := tqdm(range(1000), desc="Render")):
     for object_filename in object_filenames:
         assembly_image += image_nps[object_filename]
     assembly_image = crop_nonzero(assembly_image)
-    save_image(image_np=assembly_image, image_filename=image_filename, pixel_max=assembly_image.max(), printing=False)
+    pixel_max = 1 # assembly_image.max()
+    save_image(image_np=assembly_image, image_filename=image_filename, pixel_max=pixel_max, printing=False)
 
 print("Consumed time:",time.time()-start_time)
