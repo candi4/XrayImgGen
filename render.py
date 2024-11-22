@@ -22,14 +22,14 @@ object_filenames = params['object_filenames']
 assembly_calibrations = params['assembly_calibrations']
 directory = params['object_directory']
 
-for i in (pbar := tqdm(range(1000), desc="Rendering")):
+for i in (pbar := tqdm(range(1000), desc="Render")):
     if i == 0: rx=ry=0
     else:
         ry = random.uniform(0,360)
         rx = random.uniform(-70,70)
     delx = 0.1 # delx mm for one pixel
     image_filename=f'images/module/ry{int(ry):03}_rx{int(rx):+03}_{random.randint(0,9999):04}.png'
-    pbar.set_postfix(image_filename=image_filename)
+    pbar.set_postfix(image_filename=os.path.split(image_filename)[-1])
 
     # Transform the assembly based on the world frame
     # assembly frame based on world frame  (w_a)
