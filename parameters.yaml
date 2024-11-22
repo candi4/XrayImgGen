@@ -10,6 +10,9 @@ object_filenames:
   - R_part33 # Ring at the end of R_part23
   - R_part34 # Point at the end of R_part23
 
+  - R_part41 # left  chip inside of R_part23
+  - R_part42 # right chip inside of R_part23
+
 # The center of the larger circle of part11 is the origin of the assembly.
 # part frame based on assembly frame (a_i)
 assembly_calibrations:
@@ -51,6 +54,16 @@ assembly_calibrations:
     [[0,1,0,-0.750],
       [1,0,0,8.783],
       [0,0,1,-0.750],
+      [0,0,0,1]]
+  R_part41:
+    [[0,1,0,-2.55],
+      [1,0,0,21.220],
+      [0,0,1,-2.55],
+      [0,0,0,1]]
+  R_part42:
+    [[0,1,0,-2.55],
+      [1,0,0,12.170],
+      [0,0,1,-2.55],
       [0,0,0,1]]
 # part frame based on world frame (w_i = w_a @ a_i)
 transform_matrix:

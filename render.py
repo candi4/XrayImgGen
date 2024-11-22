@@ -83,6 +83,12 @@ for i in (pbar := tqdm(range(1000), desc="Render")):
                 # 0.3 is from background.
                 # 0.1 from part23
                 image_np[image_np != 0] = 0.75-0.3-0.1
+        elif object_filename == 'R_part41': # left  chip inside of R_part23
+            if not contrast_medium:
+                image_np[image_np != 0] = 0.125
+        elif object_filename == 'R_part42': # right chip inside of R_part23
+            if not contrast_medium:
+                image_np[image_np != 0] = 0.125
 
         # <<< For realistic rendering <<<
         image_nps[object_filename] = image_np
