@@ -15,7 +15,8 @@ import yaml
 with open("parameters.yaml", "r") as file:
     params = yaml.safe_load(file)
 
-shutil.rmtree('images/module')
+if os.path.exists('images/module'):
+    shutil.rmtree('images/module')
 
 # Prepares YAML parameters.
 params = yaml_preprocessing(yalm_params=params)
