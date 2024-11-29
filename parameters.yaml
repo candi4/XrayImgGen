@@ -1,31 +1,70 @@
 voxel_size: 0.05  # Size of each voxel in the VoxelGrid (in mm)
+object_directory: R_assembly
 object_filenames:
-  - part11 # the shell-shaped part surrounding the module
-  - part13 # the smallest part for connecting with a wire
-  - part23 # the part having hooks
+  - R_part11 # the shell-shaped part surrounding the module
+  - R_part13 # the smallest part for connecting with a wire
+  - R_part23 # the part having hooks
+
+  - R_part31 # Ring at the end of R_part11
+  - R_part32 # Ring in the middle of R_part23
+  - R_part33 # Ring at the end of R_part23
+  - R_part34 # Point at the end of R_part23
+
+  - R_part41 # left  chip inside of R_part23
+  - R_part42 # right chip inside of R_part23
 
 # The center of the larger circle of part11 is the origin of the assembly.
 # part frame based on assembly frame (a_i)
 assembly_calibrations:
-  part11:
+  R_part11:
     [[1,0,0,-4],
      [0,1,0,0],
      [0,0,1,-4],
      [0,0,0,1]]
-  part13:
+  R_part13:
     [[1,0,0,-3],
      [0,1,0,32],
      [0,0,1,-3],
      [0,0,0,1]]
-  part23: # mat[0] @ mat[1]
+  R_part23: # mat[0] @ mat[1]
       [[[0,1,0,0],
         [1,0,0,0],
         [0,0,1,0],
         [0,0,0,1]],
-       [[1,0,0,1.683],
+       [[1,0,0,8.783],
         [0,1,0,-3.37],
         [0,0,1,-3.37],
         [0,0,0,1]]]
+  R_part31:
+    [[0,1,0,-4],
+      [1,0,0,0],
+      [0,0,1,-4],
+      [0,0,0,1]]
+  R_part32:
+    [[0,1,0,-3.356],
+      [1,0,0,18.757],
+      [0,0,1,-3.356],
+      [0,0,0,1]]
+  R_part33:
+    [[0,1,0,-3.350],
+      [1,0,0,10.083],
+      [0,0,1,-3.350],
+      [0,0,0,1]]
+  R_part34:
+    [[0,1,0,-0.750],
+      [1,0,0,8.783],
+      [0,0,1,-0.750],
+      [0,0,0,1]]
+  R_part41:
+    [[0,1,0,-2.55],
+      [1,0,0,21.720],
+      [0,0,1,-2.55],
+      [0,0,0,1]]
+  R_part42:
+    [[0,1,0,-2.55],
+      [1,0,0,12.670],
+      [0,0,1,-2.55],
+      [0,0,0,1]]
 # part frame based on world frame (w_i = w_a @ a_i)
 transform_matrix:
   H_wc: # Apply rotation
@@ -38,9 +77,3 @@ transform_matrix:
      [0,1,0,-22.5],
      [0,0,1,0],
      [0,0,0,1]]
-
-# 
-weights:
-  part11: 0.5
-  part13: 1
-  part23: 0.5

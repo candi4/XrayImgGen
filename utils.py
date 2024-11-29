@@ -73,7 +73,7 @@ def object_xray(transform_matrix:torch.Tensor, voxel_size:float, nii_filename:st
                 height=100,
                 width=100, 
                 delx=0.5,  
-                ):
+                ) -> np.ndarray:
     """
     @param transform_matrix: part frame based on world frame (w_i)
     @param voxel_size: the value used when making nii file
@@ -119,6 +119,7 @@ def save_image(image_np:np.ndarray, image_filename:str, pixel_max:float, imshow=
         os.makedirs(os.path.dirname(image_filename), exist_ok=True)
     if pixel_max != 0:
         image_np /= pixel_max
+    image_np[image_np>1] = 1.0
     image_np = (image_np*255).astype(np.uint8)
     
     cv2.imwrite(image_filename, image_np)
